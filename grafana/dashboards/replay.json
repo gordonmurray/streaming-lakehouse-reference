@@ -1,0 +1,156 @@
+{
+  "title": "Historical Replay — Time Machine",
+  "uid": "replay",
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "tags": ["crypto", "cold", "replay", "iceberg"],
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Replay Progress",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "replay_progress_pct",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 25 },
+              { "color": "green", "value": 75 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Speed Multiplier",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "replay_speed_multiplier",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:x",
+          "thresholds": {
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Records Sent / Total",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "replay_records_sent",
+          "legendFormat": "Sent",
+          "refId": "A"
+        },
+        {
+          "expr": "replay_records_total",
+          "legendFormat": "Total",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Replay Throughput (records/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(replay_records_sent[1m])",
+          "legendFormat": "records/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "gradientMode": "scheme" },
+          "color": { "mode": "fixed", "fixedColor": "orange" }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Records Replayed Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "replay_records_sent",
+          "legendFormat": "Sent",
+          "refId": "A"
+        },
+        {
+          "expr": "replay_records_total",
+          "legendFormat": "Total",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Flink Replay Pipeline — Records In/Out",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "flink_taskmanager_job_task_operator_numRecordsInPerSecond{job_name=~\".*replay.*\"}",
+          "legendFormat": "In: {{operator_name}}",
+          "refId": "A"
+        },
+        {
+          "expr": "flink_taskmanager_job_task_operator_numRecordsOutPerSecond{job_name=~\".*replay.*\"}",
+          "legendFormat": "Out: {{operator_name}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }
+        }
+      }
+    }
+  ],
+  "schemaVersion": 39
+}

@@ -1,0 +1,328 @@
+{
+  "title": "Paper Trading — Equity & Positions",
+  "uid": "trading",
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": { "from": "now-3h", "to": "now" },
+  "tags": ["crypto", "hot", "trading", "execution"],
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Equity (USD)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "consensus_equity_usd",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 950 },
+              { "color": "green", "value": 1000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Cash Balance",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "consensus_balance{currency=\"USD\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": { "steps": [{ "color": "green", "value": null }] }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Total Trades",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(consensus_trades_total)",
+          "legendFormat": "total",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "steps": [{ "color": "blue", "value": null }] }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Buys / Sells",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(consensus_trades_total{side=\"BUY\"})",
+          "legendFormat": "Buys",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(consensus_trades_total{side=\"SELL\"})",
+          "legendFormat": "Sells",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "steps": [{ "color": "green", "value": null }] }
+        }
+      }
+    },
+    {
+      "id": 50,
+      "title": "System Health",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "targets": [
+        {
+          "expr": "consensus_circuit_breaker",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "color": "green", "text": "TRADING" },
+                "1": { "color": "red", "text": "DRAWDOWN BREAKER" },
+                "2": { "color": "dark-red", "text": "KILL SWITCH" }
+              }
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Equity Curve",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "consensus_equity_usd",
+          "legendFormat": "Total Equity",
+          "refId": "A"
+        },
+        {
+          "expr": "consensus_balance{currency=\"USD\"}",
+          "legendFormat": "Cash",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "gradientMode": "scheme" }
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "Position Values (USD)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "consensus_position_value_usd",
+          "legendFormat": "{{pair}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 21,
+      "title": "Unrealized P&L",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        {
+          "expr": "consensus_pnl_usd",
+          "legendFormat": "{{pair}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0 }
+            ]
+          },
+          "color": { "mode": "continuous-GrYlRd" }
+        }
+      }
+    },
+    {
+      "id": 30,
+      "title": "Signal Checks / min",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "expr": "rate(consensus_signals_checked[5m]) * 60",
+          "legendFormat": "{{pair}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cpm",
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 40,
+      "title": "Trade Log",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity" },
+      "targets": [
+        {
+          "columns": [
+            { "selector": "time", "text": "Time", "type": "timestamp" },
+            { "selector": "pair", "text": "Pair", "type": "string" },
+            { "selector": "side", "text": "Side", "type": "string" },
+            { "selector": "price", "text": "Price", "type": "number" },
+            { "selector": "quantity", "text": "Qty", "type": "number" },
+            { "selector": "signal_similarity", "text": "Similarity", "type": "number" },
+            { "selector": "signal_sentiment", "text": "Sentiment", "type": "string" },
+            { "selector": "status", "text": "Status", "type": "string" },
+            { "selector": "reason", "text": "Reason", "type": "string" }
+          ],
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://172.17.0.1:8007/api/trades",
+          "url_options": { "data": "", "method": "GET" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "filterable": true }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Price" },
+            "properties": [
+              { "id": "unit", "value": "currencyUSD" },
+              { "id": "decimals", "value": 2 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Qty" },
+            "properties": [
+              { "id": "decimals", "value": 6 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Similarity" },
+            "properties": [
+              { "id": "unit", "value": "percentunit" },
+              { "id": "decimals", "value": 1 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Side" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "BUY": { "color": "green", "text": "BUY" }, "SELL": { "color": "red", "text": "SELL" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": { "type": "color-background", "mode": "basic" }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "BLOCKED": { "color": "orange", "text": "BLOCKED" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "custom.width", "value": 180 }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Time", "desc": true }]
+      }
+    }
+  ]
+}

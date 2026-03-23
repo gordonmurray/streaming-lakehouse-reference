@@ -1,0 +1,292 @@
+services:
+  iggy:
+    image: apache/iggy:latest
+    container_name: iggy
+    restart: unless-stopped
+    cap_add:
+      - SYS_NICE
+    security_opt:
+      - seccomp:unconfined
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      - IGGY_HTTP_ADDRESS=0.0.0.0:3000
+      - IGGY_TCP_ADDRESS=0.0.0.0:8090
+      - IGGY_ROOT_USERNAME=${IGGY_USERNAME:-iggy}
+      - IGGY_ROOT_PASSWORD=${IGGY_PASSWORD:-iggy}
+    ports:
+      - "${IGGY_HTTP_PORT:-3000}:3000"
+      - "${IGGY_TCP_PORT:-8090}:8090"
+    volumes:
+      - ./data/iggy:/app/local_data
+    healthcheck:
+      test: ["CMD", "iggy", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  poller:
+    build: ./poller
+    container_name: poller
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${POLLER_METRICS_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/metrics')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      iggy:
+        condition: service_healthy
+
+  bridge:
+    build: ./bridge
+    container_name: bridge
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${BRIDGE_METRICS_PORT:-8001}:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/metrics')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      iggy:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    depends_on:
+      bridge:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin}
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/live-ticks.json
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
+      - ./grafana/dashboards/live-ticks.json:/var/lib/grafana/dashboards/live-ticks.json:ro
+      - ./grafana/dashboards/flink-pipeline.json:/var/lib/grafana/dashboards/flink-pipeline.json:ro
+      - ./grafana/dashboards/replay.json:/var/lib/grafana/dashboards/replay.json:ro
+      - ./grafana/dashboards/lancer.json:/var/lib/grafana/dashboards/lancer.json:ro
+      - ./grafana/dashboards/trading.json:/var/lib/grafana/dashboards/trading.json:ro
+      - ./data/grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  iggy-web-ui:
+    image: apache/iggy-web-ui:latest
+    container_name: iggy-web-ui
+    restart: unless-stopped
+    ports:
+      - "${IGGY_UI_PORT:-8888}:3050"
+    environment:
+      - IGGY_API_URL=http://iggy:3000
+      - PUBLIC_IGGY_API_URL=http://localhost:3000
+    depends_on:
+      iggy:
+        condition: service_healthy
+
+  # --- Phase 3: Flink Compute ---
+
+  zookeeper:
+    image: zookeeper:3.9
+    container_name: zookeeper
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
+    volumes:
+      - ./data/zookeeper:/data
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+      JVMFLAGS: "-Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider -Dzookeeper.allowSaslFailedClients=true"
+
+  jobmanager:
+    build: &flink-build
+      context: .
+      dockerfile: flink/Dockerfile
+    container_name: jobmanager
+    restart: unless-stopped
+    user: root
+    ports:
+      - "${FLINK_UI_PORT:-8081}:8081"
+    command: jobmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        state.backend: hashmap
+        state.checkpoints.dir: file:///opt/flink/warehouse/checkpoints
+        execution.checkpointing.savepoint-dir: file:///opt/flink/warehouse/savepoints
+        execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+        high-availability.type: zookeeper
+        high-availability.zookeeper.quorum: zookeeper:2181
+        high-availability.storageDir: file:///opt/flink/warehouse/ha
+        high-availability.cluster-id: /streaming-lakehouse
+    volumes:
+      - flink-warehouse:/opt/flink/warehouse
+    depends_on:
+      - zookeeper
+
+  taskmanager:
+    build: *flink-build
+    container_name: taskmanager
+    restart: unless-stopped
+    user: root
+    command: taskmanager
+    ports:
+      - "9249:9249"
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 8
+        state.backend: hashmap
+        state.checkpoints.dir: file:///opt/flink/warehouse/checkpoints
+        execution.checkpointing.savepoint-dir: file:///opt/flink/warehouse/savepoints
+        execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+        high-availability.type: zookeeper
+        high-availability.zookeeper.quorum: zookeeper:2181
+        high-availability.storageDir: file:///opt/flink/warehouse/ha
+        high-availability.cluster-id: /streaming-lakehouse
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+    volumes:
+      - flink-warehouse:/opt/flink/warehouse
+    depends_on:
+      - jobmanager
+      - iggy
+
+  # --- Phase 6: Historical Replay ---
+
+  replay:
+    build: ./replay
+    container_name: replay
+    env_file: .env
+    ports:
+      - "${REPLAY_METRICS_PORT:-8002}:8002"
+    volumes:
+      - flink-warehouse:/data/warehouse:ro
+    profiles:
+      - replay
+    depends_on:
+      iggy:
+        condition: service_healthy
+
+  # --- Phase 7: Lancer (Vector Pattern Matching) ---
+
+  lancer-indexer:
+    build: ./lancer
+    container_name: lancer-indexer
+    env_file: .env
+    environment:
+      LANCER_MODE: indexer
+    volumes:
+      - flink-warehouse:/data/warehouse:ro
+      - ./data/lancedb:/data/lancedb
+    profiles:
+      - index
+    depends_on:
+      iggy:
+        condition: service_healthy
+
+  lancer:
+    build: ./lancer
+    container_name: lancer
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      LANCER_MODE: signal
+    ports:
+      - "${LANCER_API_PORT:-8003}:8003"
+      - "${LANCER_METRICS_PORT:-8004}:8004"
+    volumes:
+      - ./data/lancedb:/data/lancedb:ro
+      - flink-warehouse:/data/warehouse:ro
+    depends_on:
+      iggy:
+        condition: service_healthy
+
+  # --- Phase 8: LLM Analyst ---
+  # Uses host Ollama (ollama must be running on the host machine)
+
+  analyst:
+    build: ./analyst
+    container_name: analyst
+    restart: unless-stopped
+    env_file: .env
+    network_mode: host
+
+  # --- Phase 10: Consensus Engine (Paper Trading) ---
+
+  consensus:
+    build: ./consensus
+    container_name: consensus
+    restart: unless-stopped
+    env_file: .env
+    network_mode: host
+    environment:
+      IGGY_HOST: localhost
+    volumes:
+      - flink-warehouse:/data/warehouse:ro
+      - ./data/consensus:/data/consensus
+
+  # --- Phase 4: Fluss Hot SQL Tier ---
+
+  fluss-coordinator:
+    image: apache/fluss:0.9.0-incubating
+    container_name: fluss-coordinator
+    restart: unless-stopped
+    command: coordinatorServer
+    ports:
+      - "${FLUSS_COORDINATOR_PORT:-9123}:9123"
+    environment:
+      FLUSS_PROPERTIES: |
+        zookeeper.address: zookeeper:2181
+        coordinator.host: fluss-coordinator
+        remote.data.dir: /tmp/fluss/remote
+    depends_on:
+      - zookeeper
+
+  fluss-tablet:
+    image: apache/fluss:0.9.0-incubating
+    container_name: fluss-tablet
+    restart: unless-stopped
+    command: tabletServer
+    environment:
+      FLUSS_PROPERTIES: |
+        zookeeper.address: zookeeper:2181
+        coordinator.host: fluss-coordinator
+        tablet-server.host: fluss-tablet
+        tablet-server.port: 9124
+        data.dir: /tmp/fluss/data
+        remote.data.dir: /tmp/fluss/remote
+    depends_on:
+      - fluss-coordinator
+
+volumes:
+  flink-warehouse:

@@ -1,0 +1,73 @@
+{
+  "title": "Flink Pipeline — Hot SQL Tier",
+  "uid": "flink-pipeline",
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "tags": ["crypto", "hot", "streaming", "flink"],
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Records/sec into Fluss",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "flink_taskmanager_job_task_operator_numRecordsInPerSecond{operator_name=~\"Sink.*\"}",
+          "legendFormat": "{{job_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Bytes/sec into Fluss",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        {
+          "expr": "flink_taskmanager_job_task_numBytesInPerSecond",
+          "legendFormat": "{{job_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Total Records Written",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        {
+          "expr": "max(flink_taskmanager_job_task_operator_numRecordsOut{operator_name=~\"Sink.*\"})",
+          "legendFormat": "records",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "blue", "value": 100000 }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

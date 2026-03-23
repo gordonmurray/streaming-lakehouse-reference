@@ -1,0 +1,378 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 0,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(255, 196, 0, 1)",
+        "name": "AI Analyst",
+        "type": "tags",
+        "tags": ["analyst"]
+      },
+      {
+        "builtIn": 0,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Pattern Match",
+        "type": "tags",
+        "tags": ["lancer"]
+      },
+      {
+        "builtIn": 0,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(115, 191, 105, 1)",
+        "name": "Buy",
+        "type": "tags",
+        "tags": ["buy"]
+      },
+      {
+        "builtIn": 0,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(242, 73, 92, 1)",
+        "name": "Sell",
+        "type": "tags",
+        "tags": ["sell"]
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "current": { "text": "BTC-USD", "value": "BTC-USD" },
+        "definition": "label_values(crypto_price, pair)",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "pair",
+        "label": "Pair",
+        "query": "label_values(crypto_price, pair)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "$pair Price",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "crypto_price{pair=\"$pair\"}",
+          "legendFormat": "$pair",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "$pair Spread",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "crypto_spread{pair=\"$pair\"}",
+          "legendFormat": "spread",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 1,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "decimals": 2,
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": { "h": 10, "w": 16, "x": 8, "y": 0 },
+      "id": 3,
+      "options": {
+        "legend": { "calcs": ["min", "max", "last"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "$pair Price (Live)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "crypto_price{pair=\"$pair\"}",
+          "legendFormat": "price",
+          "refId": "A"
+        },
+        {
+          "expr": "crypto_best_bid{pair=\"$pair\"}",
+          "legendFormat": "bid",
+          "refId": "B"
+        },
+        {
+          "expr": "crypto_best_ask{pair=\"$pair\"}",
+          "legendFormat": "ask",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        }
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 10 },
+      "id": 70,
+      "options": {
+        "mode": "candles",
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": {
+          "up": "rgba(115, 191, 105, 0.9)",
+          "down": "rgba(242, 73, 92, 0.9)",
+          "flat": "rgba(128, 128, 128, 0.9)"
+        },
+        "fields": {
+          "open": "Open",
+          "high": "High",
+          "low": "Low",
+          "close": "Close",
+          "volume": "Volume"
+        },
+        "includeAllFields": false,
+        "legend": { "displayMode": "hidden" },
+        "tooltip": { "mode": "multi" }
+      },
+      "title": "$pair — 1m Candles (OHLCV)",
+      "type": "candlestick",
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "url": "http://172.17.0.1:8007/api/candles/${pair}?minutes=60",
+          "source": "url",
+          "format": "timeseries",
+          "parser": "backend",
+          "root_selector": "",
+          "url_options": { "data": "", "method": "GET" },
+          "columns": [
+            { "selector": "time", "text": "Time", "type": "timestamp" },
+            { "selector": "open", "text": "Open", "type": "number" },
+            { "selector": "high", "text": "High", "type": "number" },
+            { "selector": "low", "text": "Low", "type": "number" },
+            { "selector": "close", "text": "Close", "type": "number" },
+            { "selector": "volume", "text": "Volume", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 4 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "$pair Volume 24h",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "crypto_volume_24h{pair=\"$pair\"}",
+          "legendFormat": "vol",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "0": { "color": "red", "text": "DISCONNECTED" }, "1": { "color": "green", "text": "CONNECTED" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      },
+      "gridPos": { "h": 3, "w": 8, "x": 0, "y": 10 },
+      "id": 50,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "WebSocket Status",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "poller_ws_connected",
+          "legendFormat": "ws",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "msgs/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 1,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        }
+      },
+      "gridPos": { "h": 6, "w": 16, "x": 8, "y": 10 },
+      "id": 51,
+      "options": {
+        "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Message Throughput (all pairs)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(poller_ws_messages_total[1m])",
+          "legendFormat": "{{ pair }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "decimals": 2,
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "id": 60,
+      "options": {
+        "legend": { "calcs": ["last"], "displayMode": "table", "placement": "right" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "All Pairs — Price Overview",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "crypto_price",
+          "legendFormat": "{{ pair }}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["crypto", "hot", "live"],
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Crypto Live Ticks",
+  "uid": "crypto-live-ticks",
+  "version": 3
+}
