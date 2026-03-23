@@ -158,7 +158,7 @@ Iceberg archive).
 
 ### Analyst (LLM)
 - Every 5 minutes: gathers price trends from Prometheus + pattern matches from Lancer API.
-- Builds RAG-style prompt, calls host Ollama (Llama 3.2 8B).
+- Builds RAG-style prompt, calls host Ollama (`mannix/llama3-8b-ablitered-v3`).
 - Pushes structured narrative as Grafana annotation.
 - FastAPI `/api/latest/{pair}` for current sentiment.
 

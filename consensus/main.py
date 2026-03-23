@@ -47,11 +47,11 @@ WAREHOUSE_PATH = os.environ.get(
 )
 
 POLL_INTERVAL = int(os.environ.get("CONSENSUS_POLL_INTERVAL", "60"))
-TRADE_SIZE_USD = float(os.environ.get("CONSENSUS_TRADE_SIZE_USD", "1000"))
-STARTING_BALANCE = float(os.environ.get("CONSENSUS_STARTING_BALANCE", "100000"))
+TRADE_SIZE_USD = float(os.environ.get("CONSENSUS_TRADE_SIZE_USD", "50"))
+STARTING_BALANCE = float(os.environ.get("CONSENSUS_STARTING_BALANCE", "1000"))
 
-ENTER_SIMILARITY = float(os.environ.get("CONSENSUS_ENTER_SIMILARITY", "0.85"))
-EXIT_SIMILARITY = float(os.environ.get("CONSENSUS_EXIT_SIMILARITY", "0.60"))
+ENTER_SIMILARITY = float(os.environ.get("CONSENSUS_ENTER_SIMILARITY", "0.20"))
+EXIT_SIMILARITY = float(os.environ.get("CONSENSUS_EXIT_SIMILARITY", "0.10"))
 
 API_PORT = int(os.environ.get("CONSENSUS_API_PORT", "8007"))
 METRICS_PORT = int(os.environ.get("CONSENSUS_METRICS_PORT", "8008"))

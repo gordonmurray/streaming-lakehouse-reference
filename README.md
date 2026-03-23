@@ -36,7 +36,7 @@ technology, leaves the system in a working state, and teaches something real.
 - **Custom Flink Connector** — [flink-connector-iggy](https://github.com/gordonmurray/flink-connector-iggy), built from scratch for Flink 1.18–1.20
 
 ### Stream Processing (Phase 3)
-- **Apache Flink 1.20.3** — OHLCV candle computation via Flink SQL, 4 task slots
+- **Apache Flink 1.20.3** — OHLCV candle computation via Flink SQL, 8 task slots
 - **ZooKeeper 3.9** — coordination (used by Fluss, available for Flink HA)
 
 ### Hot SQL Tier (Phase 4)
@@ -60,12 +60,12 @@ technology, leaves the system in a working state, and teaches something real.
 - **FastAPI** — `GET /api/signals/{pair}` returns top-5 historical matches with similarity scores
 
 ### LLM Analyst (Phase 8)
-- **Ollama** (host) — Llama 3 8B, CPU inference (~3s per pair)
+- **Ollama** (host) — Llama 3 8B (`mannix/llama3-8b-ablitered-v3`), CPU inference (~3s per pair)
 - **Analyst Service** — RAG-style: gathers price trends from Prometheus + pattern matches from Lancer, builds prompt, calls Ollama, pushes structured narrative as Grafana annotations every 5 minutes
 - **FastAPI** — `GET /api/latest/{pair}` returns current AI narrative
 
 ### Paper Trading Engine (Phase 10)
-- **Consensus Engine** — polls Lancer (similarity) + Analyst (sentiment), executes when signals align (enter > 85% similarity + Bullish, exit < 60% or Bearish)
+- **Consensus Engine** — polls Lancer (similarity) + Analyst (sentiment), executes when signals align (enter >= 20% similarity + Bullish, exit < 10% or Bearish)
 - **Flink Clearing House** — processes OrderRequests from Iggy, applies 0.1% fees + 0.05% slippage, writes to Paimon (trades + balance) and Fluss (executed trades)
 - **Paimon Ledger** — PK tables: `balance` (aggregation merge engine) + `trades` (deduplicate). Zero traditional databases.
 - **DuckDB Audit** — `GET /api/audit` queries Paimon parquet files for strategy P&L, win rate, fee impact
@@ -107,12 +107,28 @@ Coinbase WebSocket
 
 ---
 
+## Screenshots
+
+### Crypto Live Ticks — real-time price, OHLCV candles, WebSocket status
+![Live Ticks Dashboard](images/live_ticks.png)
+
+### AI Analyst annotation — LLM-generated market commentary on the price chart
+![LLM Annotation](images/live_tick_llm_annotation.png)
+
+### Flink job graph — streaming pipeline processing live ticks
+![Flink Jobs](images/flink_jobs.png)
+
+### Paper Trading — equity curve, positions, and P&L tracking
+![Paper Trading Dashboard](images/paper_trading.png)
+
+---
+
 ## Services
 
 | Service | Image | Port | Purpose |
 |---|---|---|---|
-| iggy | `apache/iggy:latest` | 3000, 8090 | Event spine (TCP + HTTP) |
-| iggy-web-ui | `apache/iggy-web-ui:latest` | 8888 | Iggy management UI |
+| iggy | `apache/iggy:0.7.0` | 3000, 8090 | Event spine (TCP + HTTP) |
+| iggy-web-ui | `apache/iggy-web-ui:0.2.0` | 8888 | Iggy management UI |
 | poller | Custom Python | 8000 | Coinbase WebSocket → Iggy |
 | bridge | Custom Python | 8001 | Iggy → Prometheus metrics |
 | zookeeper | `zookeeper:3.9` | 2181 | Coordination for Fluss |
@@ -136,6 +152,10 @@ Coinbase WebSocket
 git clone <repo>
 cd streaming-lakehouse-reference
 cp .env.example .env
+
+# Download connector JARs (~250 MB, verified with SHA-256 checksums)
+./scripts/download-jars.sh
+
 docker compose up -d
 ```
 
@@ -206,7 +226,7 @@ curl -s http://localhost:8003/api/health  # lancer
 | Iceberg data | Yes | Docker volume `flink-warehouse` persists |
 | LanceDB index | Yes | Stored at `./data/lancedb/` |
 | Paimon balance | Yes | Seeded once; persists across restarts |
-| Consensus positions | No | In-memory; resets to $100K cash, no positions |
+| Consensus positions | No | In-memory; resets to $1K cash, no positions |
 | Grafana dashboards | Yes | Provisioned from files |
 | Prometheus data | Yes | Stored at `./data/prometheus/` (7-day retention) |
 
@@ -260,7 +280,7 @@ docker exec -i jobmanager /opt/flink/bin/sql-client.sh embedded < flink/sql/ohlc
 | 9 | Multi-pair expansion + dynamic dashboards | Complete |
 | 10 | Lakehouse execution engine (paper trading) | Complete |
 
-See `plan.md` for full phase detail and acceptance criteria.
+Each phase introduces one new technology, leaves the system working, and teaches something real.
 
 ---
 
@@ -324,7 +344,6 @@ Hover over any annotation line on the chart to see the full detail.
 - All services run via Docker Compose
 - All config via `.env` — never hardcoded
 - One phase at a time — commit before starting the next
-- See `CLAUDE.md` for AI assistant behaviour rules
 
 ---
 
@@ -338,4 +357,5 @@ No authentication or API keys required for public market data.
 
 ## More Info
 
-See [architecture.md](architecture.md) for the full system design and component details.
+- [architecture.md](architecture.md) — full system design and component details
+- [docs/clean-slate-guide.md](docs/clean-slate-guide.md) — full reset with 6-month historical backfill

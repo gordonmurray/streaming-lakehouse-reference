@@ -1,0 +1,9 @@
+data/
+.git/
+.env
+__pycache__/
+*.pyc
+docs/
+scripts/
+grafana/
+prometheus/

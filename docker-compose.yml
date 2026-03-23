@@ -1,10 +1,13 @@
 services:
   iggy:
-    image: apache/iggy:latest
+    image: apache/iggy:0.7.0
     container_name: iggy
     restart: unless-stopped
     cap_add:
       - SYS_NICE
+    # Iggy uses io_uring for high-performance async I/O, which requires
+    # syscalls blocked by Docker's default seccomp profile. This is safe
+    # for local development. See: https://github.com/iggy-rs/iggy/issues/1292
     security_opt:
       - seccomp:unconfined
     ulimits:
@@ -100,7 +103,7 @@ services:
       - prometheus
 
   iggy-web-ui:
-    image: apache/iggy-web-ui:latest
+    image: apache/iggy-web-ui:0.2.0
     container_name: iggy-web-ui
     restart: unless-stopped
     ports:

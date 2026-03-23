@@ -23,7 +23,7 @@ log = logging.getLogger("analyst")
 # Config
 # ---------------------------------------------------------------------------
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "mannix/llama3-8b-ablitered-v3")
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "http://prometheus:9090")
 LANCER_URL = os.environ.get("LANCER_URL", "http://lancer:8003")
 GRAFANA_URL = os.environ.get("GRAFANA_URL", "http://grafana:3000")
