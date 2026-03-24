@@ -78,32 +78,7 @@ technology, leaves the system in a working state, and teaches something real.
 
 ## Architecture
 
-```
-Coinbase WebSocket
-       │
-       ▼
-    Poller (Python)
-       │
-       ▼
-    Apache Iggy ──────► Bridge (Python) ──► Prometheus ──► Grafana
-       │                                        ▲
-       ▼                                        │
-    Apache Flink ──► Apache Fluss          Flink Metrics
-       │                                   (port 9249)
-       ├──► Apache Paimon  (warm: 1-min OHLCV candles)
-       └──► Apache Iceberg (cold: raw tick archive)
-                │
-                ▼
-           Replay Service (Python) ──► Iggy crypto/replay ──► Flink ──► Paimon
-
-    Apache Paimon ──► Lancer Indexer ──► LanceDB (16k+ pattern vectors)
-    Apache Iggy   ──► Lancer Signal  ──► LanceDB query ──► Grafana Annotations
-                                     └──► FastAPI /api/signals/{pair}
-
-    Prometheus (trends) ──┐
-                          ├──► Analyst ──► Ollama (Llama 3) ──► Grafana Annotations
-    Lancer (matches)  ────┘                                └──► FastAPI /api/latest
-```
+![Architecture](images/architecture.svg)
 
 ---
 
